@@ -1,26 +1,18 @@
-import qrcode
+#!/usr/bin/python3
+
+import datetime
 import os
+import pipes
+import sys
 import xml.etree.ElementTree as ET
 
-def createQR(ssid, password, encryption, hidden="false"):
-    #WIFI:S:<SSID>;T:<WEP|WPA|blank>;P:<PASSWORD>;H:<true|false|blank>;;
-    # Create the string using the variables
-    connection_string = f"WIFI:S:{ssid};T:{encryption};P:{password};H:{hidden};"
-    print(connection_string)
+def emitCommand(ssid, password, encryption, hidden=False, device=None, outfile=None):
+    if encryption == "nopass":
+        command_string = "nmcli d wifi connect %s" % (pipes.quote(ssid),)
+    elif encryption == "WPA":
+        command_string = "nmcli d wifi connect %s password %s" % (pipes.quote(ssid), pipes.quote(password))
 
-    # Create the QR code
-    img = qrcode.make(connection_string)
-
-    # Save the QR code
-    image_name = f"{ssid}.png"
-    
-    # Skip if the name has a *
-    if "*" in image_name:
-        return
-    
-    # Skip if the file already exists
-    if not os.path.exists(image_name):
-        img.save("QR/" + image_name)
+    outfile.write('%s\n' % command_string)
     
 def extractNetwork(file_path):
     tree = ET.parse(file_path)
@@ -65,12 +57,19 @@ def extractNetwork(file_path):
 
 def main():
     # Parse XML file
-    networks = extractNetwork("WifiConfigStore.xml")
+    networks = extractNetwork(sys.argv[1])
     
-    for wifi in networks:
-        # SSID, PASSWORD, ENCRYPTION
-        createQR(wifi[0], wifi[1], wifi[2])
+    with open('nmcli-wifi.sh', 'w') as f:
+        f.write('#!/bin/sh\n')
+        f.write('# Wi-Fi configuration file created from %s by ConvertToNMCli.py at %s\n\n' % (sys.argv[1], datetime.datetime.now().isoformat()))
+        for wifi in networks:
+            # SSID, PASSWORD, ENCRYPTION
+            emitCommand(wifi[0], wifi[1], wifi[2], outfile=f)
 
+    print('Saved script at %s' % os.path.abspath('nmcli-wifi.sh'))
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print('Usage: %s /path/to/WifiConfigStore.xml' % sys.argv[0])
+        sys.exit(1)
     main()
