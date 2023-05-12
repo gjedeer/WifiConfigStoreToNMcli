@@ -1,13 +1,19 @@
-# WifiConfigStoreToQR
-This program turns your WiFiConfigStore.xml file into QR codes for scanning
+# WifiConfigStoreToNMcli
+This program turns your WiFiConfigStore.xml file extracted from an Android phone into a batch file configuring NetworkManager to add found networks.
 
 ## Writeup
-To see more detail into how this program was developed and how to extract the WiFiConfigStore.xml file, check out [my blog post](https://blog.antoniosolismz.com/?p=97)
-
-## Requirements
-Install [qrcode](https://pypi.org/project/qrcode/) and [pillow](https://pypi.org/project/Pillow/)
+This is based on WifiConfigStoreToQR. To see more detail into how this program was developed and how to extract the WiFiConfigStore.xml file, check out [Antonio's blog post](https://blog.antoniosolismz.com/?p=97)
 
 ## Usage
-Create a `QR` directory (this is where the QR images will be stored)
+Run `python3 ConvertToQR.py /path/to/WiFiConfigStore.xml`
 
-Run `python3 ConvertToQR.py`
+Example of the script output:
+
+```
+#!/bin/sh
+# Wi-Fi configuration file created from WifiConfigStore.xml by ConvertToNMCli.py at 2023-05-12T11:21:54.552360
+
+nmcli d wifi connect HOTSPOT
+nmcli d wifi connect openwireless.org
+nmcli d wifi connect LibreELEC-AP password aabbccddeeff
+```
